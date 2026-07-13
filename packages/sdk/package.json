@@ -1,0 +1,32 @@
+{
+  "name": "@sigil/sdk",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "types": "./dist/index.d.ts",
+  "exports": {
+    ".": {
+      "import": "./dist/index.js",
+      "types": "./dist/index.d.ts"
+    }
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sigil/core": "workspace:*",
+    "@sigil/crypto": "workspace:*",
+    "@sigil/graph": "workspace:*",
+    "@sigil/policy": "workspace:*",
+    "@sigil/backend-local": "workspace:*",
+    "better-sqlite3": "^11.0.0",
+    "ulid": "^2.3.0"
+  },
+  "devDependencies": {
+    "@types/better-sqlite3": "^7.6.0"
+  }
+}

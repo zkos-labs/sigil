@@ -1,0 +1,25 @@
+{
+  "name": "@sigil/cli",
+  "version": "0.1.0",
+  "private": true,
+  "type": "module",
+  "main": "./dist/index.js",
+  "bin": {
+    "sigil": "./dist/index.js"
+  },
+  "scripts": {
+    "build": "tsc",
+    "typecheck": "tsc --noEmit",
+    "clean": "rm -rf dist",
+    "test": "vitest run"
+  },
+  "dependencies": {
+    "@sigil/core": "workspace:*",
+    "@sigil/sdk": "workspace:*",
+    "commander": "^13.0.0",
+    "yaml": "^2.6.0"
+  },
+  "devDependencies": {
+    "@types/node": "^26.1.1"
+  }
+}
