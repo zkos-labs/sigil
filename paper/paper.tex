@@ -118,7 +118,12 @@ database-specific, domain-tied or general-purpose -- but never all four
 properties simultaneously.
 
 \textbf{Our contribution.} Sigil addresses this gap through five key
-innovations.  First, it introduces a \emph{backend-agnostic provenance engine}
+innovations.  At the center of these innovations is the \emph{Midnight
+Network}, which Sigil adopts as its confidential \emph{trust anchor}: the
+zero-knowledge root in which every commitment is anchored and against which
+every selective disclosure is verified, so that provenance generated on any
+execution substrate can be confidentially verified everywhere.  First, it
+introduces a \emph{backend-agnostic provenance engine}
 with a pluggable interface that abstracts over blockchain networks, local
 databases, content-addressable storage, and future backends.  Second, it
 adopts an \emph{event-sourced graph-native model} in which every provenance
@@ -156,10 +161,10 @@ directions.  Section~IX concludes.
 \subsection{Provenance Models}
 
 The W3C PROV family of standards provides the canonical data model for
-representing provenance on the Web~\cite{groth2013}. PROV defines three core
+representing provenance on the Web~\cite{w3c-prov2013}. PROV defines three core
 types -- Entity, Activity, and Agent -- and binary relations among them:
 \emph{wasGeneratedBy}, \emph{wasDerivedFrom}, \emph{wasAttributedTo}, and
-others. The PROV-O ontology~\cite{belchior2022} maps this model to RDF/OWL,
+others. The PROV-O ontology~\cite{groth2013} maps this model to RDF/OWL,
 enabling semantic reasoning over provenance graphs. PROV-DM provides a formal
 data model with constraints and inference rules.
 
@@ -173,16 +178,23 @@ cryptographic guarantees that PROV leaves unspecified.
 
 \subsection{Blockchain-Based Provenance}
 
-Public blockchains offer an attractive substrate for provenance: they provide
-append-only immutable ledgers with global verifiability.  However, the
-transparency that enables verification also creates a fundamental tension with
-confidentiality~\cite{xu2017,eberhardt2017}.  Every transaction, every
-attribute, every relationship recorded on a public chain is visible to all
-participants.  For supply chain provenance, this means competitors can observe
-supplier relationships, pricing structures, and production volumes.
+Public blockchains offer an attractive substrate for provenance: since
+Bitcoin~\cite{nakamoto2008} they provide append-only immutable ledgers with
+global verifiability.  Programmable smart-contract platforms such as
+Ethereum~\cite{buterin2014,wood2014}, building on early formalizations of
+digital contracts~\cite{szabo1997}, extended this substrate with general
+computation.  However, the transparency that enables verification also creates
+a fundamental tension with confidentiality~\cite{xu2017,eberhardt2017}.  Every
+transaction, every attribute, every relationship recorded on a public chain is
+visible to all participants.  For supply chain provenance, this means
+competitors can observe supplier relationships, pricing structures, and
+production volumes -- and, for proof-of-work networks, verification carries
+substantial energy costs~\cite{sedlmeir2021}.
 
 Layer-two protocols~\cite{gudgeon2020} and sidechains offer some scalability
-relief but do not address the confidentiality problem.  Private blockchains
+relief, and hybrid on-chain/off-chain designs improve data retention and
+storage efficiency~\cite{renner2023}, but neither addresses the confidentiality
+problem.  Private blockchains
 such as Hyperledger Fabric~\cite{androulaki2018} provide channel-based
 confidentiality but introduce a consortium trust model where the ordering
 service and endorsement peers must be trusted collectively -- a weaker
@@ -196,7 +208,10 @@ over multiple blockchain and non-blockchain backends.
 
 \subsection{Zero-Knowledge Proofs and Confidential Computing}
 
-Zero-knowledge proofs (ZKPs) enable a prover to convince a verifier of a
+Privacy-preserving cryptography has a long lineage, from blind
+signatures~\cite{chaum1982} to the privacy-enhancing technologies now pervasive
+in decentralized systems~\cite{meiklejohn2024}.  Zero-knowledge proofs (ZKPs)
+enable a prover to convince a verifier of a
 statement's truth without revealing any information beyond the statement's
 validity.  zk-SNARKs (Succinct Non-interactive Arguments of Knowledge) provide
 constant-size proofs and fast verification~\cite{bunz2018,ben-sasson2021}.
@@ -214,7 +229,12 @@ in the Compact language can declare both public and private state, with the
 runtime automatically generating ZK proofs for transitions involving private
 data.  The network provides native support for selective disclosure, allowing
 contract authors to define exactly which data fields are revealed to which
-observers.
+observers.  These properties -- public/private state separation, native
+selective disclosure, and automatic Kachina-based proof generation -- make
+Midnight uniquely suited to serve as Sigil's confidential \emph{trust anchor},
+the role it occupies throughout this work: the root in which Sigil anchors its
+commitments and against which every zero-knowledge disclosure is verified,
+independent of the chain on which an application executes.
 
 Confidential computing through hardware-based Trusted Execution Environments
 (TEEs)~\cite{liu2023} provides an alternative approach to privacy-preserving
@@ -239,10 +259,15 @@ platform operator.  There is no cryptographic mechanism for an independent
 party to verify that a carbon offset claim has not been altered since
 issuance.  The regulatory push toward mandatory ESG disclosure creates an
 unmet need for verifiable, privacy-preserving provenance infrastructure.
+Privacy-preserving data sharing has been explored in adjacent industrial IoT
+settings through blockchain and federated learning~\cite{lu2021}, but without a
+general, backend-agnostic provenance abstraction.
 
 \subsection{Software Supply Chain Security}
 
-The software supply chain security community has developed several frameworks
+Motivated by the rise of software supply chain attacks on open-source package
+managers~\cite{duan2021}, the software supply chain security community has
+developed several frameworks
 for build provenance.  SLSA (Supply-chain Levels for Software Artifacts)
 defines a four-level maturity model for build integrity.  The in-toto
 framework~\cite{torres-arias2019} provides a metadata format for capturing
@@ -1041,26 +1066,14 @@ as public infrastructure for the verifiable digital economy.
 
 \begin{thebibliography}{30}
 
-\bibitem{w3c-prov2013}
-W3C, ``PROV-Overview: An Overview of the PROV Family of Documents,''
-\textit{W3C Working Group Note}, 2013.
+\bibitem{tramer2016}
+F.~Tram\`{e}r {\em et al.}, ``Stealing Machine Learning Models via Prediction
+APIs,'' in \textit{Proc. USENIX Security}, 2016, pp.~601--618.
 
-\bibitem{groth2013}
-P.~Groth and L.~Moreau, ``PROV-O: The PROV Ontology,''
-\textit{W3C Recommendation}, 2013.
-
-\bibitem{belchior2022}
-R.~Belchior {\em et al.}, ``A Survey on Blockchain Interoperability: Past,
-Present, and Future Trends,''
-\textit{ACM Computing Surveys}, vol.~54, no.~8, pp.~1--38, 2022.
-
-\bibitem{bunz2018}
-B.~B\"{u}nz {\em et al.}, ``Bulletproofs: Short Proofs for Confidential
-Transactions and More,'' in \textit{Proc. IEEE S\&P}, 2018, pp.~315--334.
-
-\bibitem{midnight2023}
-Midnight Network, ``Midnight: A Data Protection Blockchain,''
-\textit{IOG Research}, 2023.
+\bibitem{eu2024}
+European Commission, ``Regulation (EU) 2024/1781: Ecodesign for Sustainable
+Products Regulation (ESPR),'' \textit{Official Journal of the European Union},
+2024.
 
 \bibitem{eberhardt2017}
 J.~Eberhardt and S.~Tai, ``On or Off the Blockchain? Insights on Off-Chaining
@@ -1070,31 +1083,81 @@ Computation and Data,'' in \textit{Proc. ESOCC}, 2017, pp.~3--15.
 X.~Xu {\em et al.}, ``A Taxonomy of Blockchain-Based Systems for Architecture
 Design,'' in \textit{Proc. IEEE ICSA}, 2017, pp.~243--252.
 
-\bibitem{bonneau2015}
-J.~Bonneau {\em et al.}, ``SoK: Research Perspectives and Challenges for Bitcoin
-and Cryptocurrencies,'' in \textit{Proc. IEEE S\&P}, 2015, pp.~104--121.
+\bibitem{androulaki2018}
+E.~Androulaki {\em et al.}, ``Hyperledger Fabric: A Distributed Operating
+System for Permissioned Blockchains,'' in \textit{Proc. EuroSys}, 2018,
+pp.~1--15.
 
-\bibitem{duan2021}
-H.~Duan {\em et al.}, ``Towards Measuring Supply Chain Attacks on Package
-Managers for Interpreted Languages,'' in \textit{Proc. NDSS}, 2021.
+\bibitem{midnight2023}
+Midnight Network, ``Midnight: A Data Protection Blockchain,''
+\textit{IOG Research}, 2023.
 
-\bibitem{torres-arias2019}
-S.~Torres-Arias {\em et al.}, ``in-toto: Providing Farm-to-Table Guarantees
-for Bits and Bytes,'' in \textit{Proc. USENIX Security}, 2019, pp.~1393--1410.
+\bibitem{w3c-prov2013}
+W3C, ``PROV-Overview: An Overview of the PROV Family of Documents,''
+\textit{W3C Working Group Note}, 2013.
+
+\bibitem{groth2013}
+P.~Groth and L.~Moreau, ``PROV-O: The PROV Ontology,''
+\textit{W3C Recommendation}, 2013.
+
+\bibitem{nakamoto2008}
+S.~Nakamoto, ``Bitcoin: A Peer-to-Peer Electronic Cash System,''
+\textit{White Paper}, 2008.
+
+\bibitem{buterin2014}
+V.~Buterin, ``A Next-Generation Smart Contract and Decentralized Application
+Platform,'' \textit{Ethereum White Paper}, 2014.
+
+\bibitem{wood2014}
+G.~Wood, ``Ethereum: A Secure Decentralised Generalised Transaction Ledger,''
+\textit{Ethereum Yellow Paper}, 2014.
+
+\bibitem{szabo1997}
+N.~Szabo, ``Formalizing and Securing Relationships on Public Networks,''
+\textit{First Monday}, vol.~2, no.~9, 1997.
+
+\bibitem{sedlmeir2021}
+J.~Sedlmeir {\em et al.}, ``The Energy Consumption of Blockchain and
+Cryptocurrency Technologies,'' \textit{Joule}, vol.~5, no.~12,
+pp.~3235--3262, 2021.
+
+\bibitem{gudgeon2020}
+L.~Gudgeon {\em et al.}, ``SoK: Layer-Two Blockchain Protocols,'' in
+\textit{Proc. FC}, 2020, pp.~201--226.
 
 \bibitem{renner2023}
 T.~Renner {\em et al.}, ``Endolith: A Blockchain-Based Framework to Enhance
 Data Retention in Cloud Storage,'' \textit{IEEE Access}, vol.~11,
 pp.~45678--45691, 2023.
 
-\bibitem{lucovsky2022}
-M.~Lucovsky {\em et al.}, ``Sigstore: Software Signing for Everybody,'' in
-\textit{Proc. ACM CCS}, 2022, pp.~2401--2415.
+\bibitem{belchior2022}
+R.~Belchior {\em et al.}, ``A Survey on Blockchain Interoperability: Past,
+Present, and Future Trends,''
+\textit{ACM Computing Surveys}, vol.~54, no.~8, pp.~1--38, 2022.
 
-\bibitem{tang2023}
-Q.~Tang {\em et al.}, ``Privacy-Preserving Supply Chain Traceability with
-Smart Contracts,'' \textit{IEEE Trans. Services Computing}, vol.~16, no.~2,
-pp.~1234--1247, 2023.
+\bibitem{chaum1982}
+D.~Chaum, ``Blind Signatures for Untraceable Payments,'' in \textit{Proc.
+CRYPTO}, 1982, pp.~199--203.
+
+\bibitem{meiklejohn2024}
+S.~Meiklejohn {\em et al.}, ``SoK: Privacy-Enhancing Technologies in
+Cryptocurrencies,'' in \textit{Proc. IEEE S\&P}, 2024.
+
+\bibitem{bunz2018}
+B.~B\"{u}nz {\em et al.}, ``Bulletproofs: Short Proofs for Confidential
+Transactions and More,'' in \textit{Proc. IEEE S\&P}, 2018, pp.~315--334.
+
+\bibitem{ben-sasson2021}
+E.~Ben-Sasson {\em et al.}, ``Scalable Zero Knowledge via Cycles of Elliptic
+Curves,'' \textit{Algorithmica}, vol.~83, no.~8, pp.~2458--2495, 2021.
+
+\bibitem{gabay2023}
+D.~Gabay {\em et al.}, ``Privacy-Preserving Regulatory Compliance with
+Zero-Knowledge Proofs,'' in \textit{Proc. FC}, 2023, pp.~318--336.
+
+\bibitem{babel2023}
+M.~Babel and J.~Sedlmeir, ``Bringing Data Minimization to Digital Identities
+at Scale,'' \textit{IEEE Access}, vol.~11, pp.~98765--98780, 2023.
 
 \bibitem{zhang2024}
 R.~Zhang {\em et al.}, ``Zero-Knowledge Proofs for Machine Learning: A
@@ -1106,69 +1169,31 @@ Y.~Liu {\em et al.}, ``Confidential Computing: A Survey of Hardware-Based
 Trusted Execution Environments,'' \textit{ACM Computing Surveys}, vol.~56,
 no.~3, pp.~1--37, 2023.
 
-\bibitem{gudgeon2020}
-L.~Gudgeon {\em et al.}, ``SoK: Layer-Two Blockchain Protocols,'' in
-\textit{Proc. FC}, 2020, pp.~201--226.
-
-\bibitem{androulaki2018}
-E.~Androulaki {\em et al.}, ``Hyperledger Fabric: A Distributed Operating
-System for Permissioned Blockchains,'' in \textit{Proc. EuroSys}, 2018,
-pp.~1--15.
-
-\bibitem{meiklejohn2024}
-S.~Meiklejohn {\em et al.}, ``SoK: Privacy-Enhancing Technologies in
-Cryptocurrencies,'' in \textit{Proc. IEEE S\&P}, 2024.
-
-\bibitem{babel2023}
-M.~Babel and J.~Sedlmeir, ``Bringing Data Minimization to Digital Identities
-at Scale,'' \textit{IEEE Access}, vol.~11, pp.~98765--98780, 2023.
-
-\bibitem{sedlmeir2021}
-J.~Sedlmeir {\em et al.}, ``The Energy Consumption of Blockchain and
-Cryptocurrency Technologies,'' \textit{Joule}, vol.~5, no.~12,
-pp.~3235--3262, 2021.
-
-\bibitem{gabay2023}
-D.~Gabay {\em et al.}, ``Privacy-Preserving Regulatory Compliance with
-Zero-Knowledge Proofs,'' in \textit{Proc. FC}, 2023, pp.~318--336.
-
-\bibitem{ben-sasson2021}
-E.~Ben-Sasson {\em et al.}, ``Scalable Zero Knowledge via Cycles of Elliptic
-Curves,'' \textit{Algorithmica}, vol.~83, no.~8, pp.~2458--2495, 2021.
-
-\bibitem{tramer2016}
-F.~Tram\`{e}r {\em et al.}, ``Stealing Machine Learning Models via Prediction
-APIs,'' in \textit{Proc. USENIX Security}, 2016, pp.~601--618.
-
-\bibitem{eu2024}
-European Commission, ``Regulation (EU) 2024/1781: Ecodesign for Sustainable
-Products Regulation (ESPR),'' \textit{Official Journal of the European Union},
-2024.
+\bibitem{tang2023}
+Q.~Tang {\em et al.}, ``Privacy-Preserving Supply Chain Traceability with
+Smart Contracts,'' \textit{IEEE Trans. Services Computing}, vol.~16, no.~2,
+pp.~1234--1247, 2023.
 
 \bibitem{lu2021}
 Y.~Lu {\em et al.}, ``Blockchain and Federated Learning for Privacy-Preserved
 Data Sharing in Industrial IoT,'' \textit{IEEE Trans. Industrial Informatics},
 vol.~17, no.~6, pp.~4165--4176, 2021.
 
-\bibitem{nakamoto2008}
-S.~Nakamoto, ``Bitcoin: A Peer-to-Peer Electronic Cash System,''
-\textit{White Paper}, 2008.
+\bibitem{duan2021}
+H.~Duan {\em et al.}, ``Towards Measuring Supply Chain Attacks on Package
+Managers for Interpreted Languages,'' in \textit{Proc. NDSS}, 2021.
 
-\bibitem{wood2014}
-G.~Wood, ``Ethereum: A Secure Decentralised Generalised Transaction Ledger,''
-\textit{Ethereum Yellow Paper}, 2014.
+\bibitem{torres-arias2019}
+S.~Torres-Arias {\em et al.}, ``in-toto: Providing Farm-to-Table Guarantees
+for Bits and Bytes,'' in \textit{Proc. USENIX Security}, 2019, pp.~1393--1410.
 
-\bibitem{buterin2014}
-V.~Buterin, ``A Next-Generation Smart Contract and Decentralized Application
-Platform,'' \textit{Ethereum White Paper}, 2014.
+\bibitem{lucovsky2022}
+M.~Lucovsky {\em et al.}, ``Sigstore: Software Signing for Everybody,'' in
+\textit{Proc. ACM CCS}, 2022, pp.~2401--2415.
 
-\bibitem{szabo1997}
-N.~Szabo, ``Formalizing and Securing Relationships on Public Networks,''
-\textit{First Monday}, vol.~2, no.~9, 1997.
-
-\bibitem{chaum1982}
-D.~Chaum, ``Blind Signatures for Untraceable Payments,'' in \textit{Proc.
-CRYPTO}, 1982, pp.~199--203.
+\bibitem{bonneau2015}
+J.~Bonneau {\em et al.}, ``SoK: Research Perspectives and Challenges for Bitcoin
+and Cryptocurrencies,'' in \textit{Proc. IEEE S\&P}, 2015, pp.~104--121.
 
 \end{thebibliography}
 
