@@ -1,0 +1,748 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Sigil / Confidential Provenance Infrastructure</title>
+<meta name="description" content="Sigil is open source confidential provenance infrastructure. Record the full history of any asset, then disclose exactly the fields a viewer is entitled to.">
+<style>
+/* ============================================================
+   Sigil landing page
+   Aesthetic family: technical document. Not an official design
+   system, built on native CSS. Sans display over a monospace
+   data register, which is the page's real personality.
+   Dials: DESIGN_VARIANCE 6 / MOTION_INTENSITY 3 / VISUAL_DENSITY 5
+   ============================================================ */
+
+:root {
+  color-scheme: light dark;
+
+  /* Sans display. Deliberately not Inter and deliberately not a
+     serif: this is developer infrastructure, not a publication. */
+  --font-display: ui-sans-serif, system-ui, "Segoe UI Variable Display", "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+  --font-body: system-ui, -apple-system, "Segoe UI", Roboto, "Helvetica Neue", sans-serif;
+  --font-mono: ui-monospace, "SF Mono", SFMono-Regular, "Cascadia Mono", "Roboto Mono", Menlo, Consolas, monospace;
+
+  --step--1: clamp(0.78rem, 0.76rem + 0.10vw, 0.84rem);
+  --step-0:  clamp(1.00rem, 0.97rem + 0.15vw, 1.06rem);
+  --step-1:  clamp(1.16rem, 1.10rem + 0.30vw, 1.34rem);
+  --step-2:  clamp(1.50rem, 1.34rem + 0.72vw, 2.00rem);
+  --step-3:  clamp(1.85rem, 1.62rem + 1.05vw, 2.30rem);
+
+  --shell: 76rem;
+  --measure: 62ch;
+
+  /* One radius scale for the whole page. Sharp, to match the subject. */
+  --r: 3px;
+
+  /* One accent, used identically in every section. */
+  --paper:      #E8EBEF;
+  --surface:    #F4F6F8;
+  --surface-2:  #DDE2E8;
+  --ink:        #0A1420;
+  --text:       #1B2735;
+  --muted:      #5A6979;
+  --line:       rgba(20, 56, 95, 0.17);
+  --line-soft:  rgba(20, 56, 95, 0.085);
+  --accent:     #8A6418;
+  --accent-2:   rgba(138, 100, 24, 0.12);
+  --redact:     #0A1420;
+  --shadow:     0 1px 2px rgba(10, 20, 32, 0.05), 0 12px 34px rgba(10, 20, 32, 0.07);
+}
+
+@media (prefers-color-scheme: dark) {
+  :root {
+    --paper: #070E16; --surface: #0D1825; --surface-2: #152334;
+    --ink: #E8EBEF; --text: #CFD8E2; --muted: #8394A6;
+    --line: rgba(157, 189, 222, 0.19); --line-soft: rgba(157, 189, 222, 0.095);
+    --accent: #D9A94F; --accent-2: rgba(217, 169, 79, 0.13);
+    --redact: #32465C;
+    --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 44px rgba(0, 0, 0, 0.36);
+  }
+}
+
+/* The viewer toggle stamps data-theme on the root and must win both ways. */
+:root[data-theme="light"] {
+  --paper: #E8EBEF; --surface: #F4F6F8; --surface-2: #DDE2E8;
+  --ink: #0A1420; --text: #1B2735; --muted: #5A6979;
+  --line: rgba(20, 56, 95, 0.17); --line-soft: rgba(20, 56, 95, 0.085);
+  --accent: #8A6418; --accent-2: rgba(138, 100, 24, 0.12);
+  --redact: #0A1420;
+  --shadow: 0 1px 2px rgba(10, 20, 32, 0.05), 0 12px 34px rgba(10, 20, 32, 0.07);
+}
+:root[data-theme="dark"] {
+  --paper: #070E16; --surface: #0D1825; --surface-2: #152334;
+  --ink: #E8EBEF; --text: #CFD8E2; --muted: #8394A6;
+  --line: rgba(157, 189, 222, 0.19); --line-soft: rgba(157, 189, 222, 0.095);
+  --accent: #D9A94F; --accent-2: rgba(217, 169, 79, 0.13);
+  --redact: #32465C;
+  --shadow: 0 1px 2px rgba(0, 0, 0, 0.4), 0 16px 44px rgba(0, 0, 0, 0.36);
+}
+
+* { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; scroll-behavior: smooth; }
+
+body {
+  margin: 0;
+  background: var(--paper);
+  color: var(--text);
+  font-family: var(--font-body);
+  font-size: var(--step-0);
+  line-height: 1.62;
+  overflow-x: hidden;
+}
+
+h1, h2, h3 {
+  font-family: var(--font-display);
+  color: var(--ink);
+  line-height: 1.06;
+  text-wrap: balance;
+  margin: 0;
+}
+h1 { font-size: var(--step-3); font-weight: 660; letter-spacing: -0.032em; }
+h2 { font-size: var(--step-2); font-weight: 640; letter-spacing: -0.026em; }
+h3 { font-size: var(--step-1); font-weight: 620; letter-spacing: -0.014em; }
+
+p { margin: 0; }
+a { color: var(--accent); text-underline-offset: 0.2em; }
+code, .mono { font-family: var(--font-mono); font-size: 0.88em; }
+
+:focus-visible { outline: 2px solid var(--accent); outline-offset: 3px; border-radius: var(--r); }
+
+@media (prefers-reduced-motion: reduce) {
+  html { scroll-behavior: auto; }
+  * { animation-duration: 0.001ms !important; transition-duration: 0.001ms !important; }
+}
+
+/* ---------- shell ---------- */
+
+.shell {
+  width: 100%;
+  max-width: var(--shell);
+  margin-inline: auto;
+  padding-inline: clamp(1.15rem, 4vw, 2.25rem);
+}
+
+.sec { border-top: 1px solid var(--line-soft); }
+.sec-in { padding-block: clamp(3.5rem, 8vw, 6rem); }
+.sec-in > * + * { margin-top: 1.75rem; }
+
+.dek { color: var(--muted); max-width: var(--measure); }
+
+/* Two column body. Not a split header: the headline stays full width above. */
+.cols { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: clamp(1.5rem, 4vw, 3rem); }
+.cols .dek { max-width: 46ch; }
+@media (max-width: 52rem) { .cols { grid-template-columns: 1fr; } }
+.note { font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted); line-height: 1.6; max-width: var(--measure); }
+
+/* ---------- masthead ---------- */
+
+.masthead {
+  display: flex; align-items: center; justify-content: space-between;
+  gap: 1rem; height: 68px;
+  border-bottom: 1px solid var(--line-soft);
+}
+
+.wordmark {
+  display: inline-flex; align-items: center; gap: 0.6rem;
+  font-family: var(--font-mono); font-size: var(--step--1);
+  letter-spacing: 0.34em; text-transform: uppercase;
+  color: var(--ink); text-decoration: none; white-space: nowrap;
+}
+
+.masthead nav { display: flex; gap: clamp(0.85rem, 2.6vw, 1.75rem); align-items: center; }
+.masthead nav a {
+  font-family: var(--font-mono); font-size: var(--step--1);
+  letter-spacing: 0.08em; text-transform: uppercase;
+  color: var(--muted); text-decoration: none; white-space: nowrap;
+  transition: color 130ms ease;
+}
+.masthead nav a:hover { color: var(--ink); }
+@media (max-width: 40rem) { .masthead nav a.opt { display: none; } }
+
+.seal .ring { fill: none; stroke: var(--accent); }
+.seal .tick { stroke: var(--accent); }
+.seal .core { fill: none; stroke: var(--muted); }
+
+/* ---------- hero: asymmetric split, live component on the right ---------- */
+
+.hero { padding-block: clamp(2.75rem, 6vw, 4.5rem) clamp(3rem, 7vw, 5rem); }
+
+.hero-grid {
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  gap: clamp(2rem, 5vw, 3.5rem);
+  align-items: center;
+}
+@media (max-width: 62rem) { .hero-grid { grid-template-columns: 1fr; } }
+
+.hero h1 { max-width: 26ch; }
+.hero h1 b { color: var(--accent); font-weight: inherit; }
+
+.hero .lede {
+  font-size: var(--step-1); line-height: 1.5;
+  color: var(--text); max-width: 40ch; margin-top: 1.25rem;
+}
+
+.actions { display: flex; flex-wrap: wrap; gap: 0.6rem; margin-top: 1.9rem; }
+
+.btn {
+  display: inline-flex; align-items: center; justify-content: center;
+  font-family: var(--font-mono); font-size: var(--step--1);
+  letter-spacing: 0.09em; text-transform: uppercase;
+  padding: 0.7rem 1.2rem; border-radius: var(--r);
+  text-decoration: none; white-space: nowrap; cursor: pointer;
+  border: 1px solid var(--line); color: var(--ink); background: transparent;
+  transition: border-color 130ms ease, color 130ms ease, transform 90ms ease;
+}
+.btn:hover { border-color: var(--accent); color: var(--accent); }
+.btn:active { transform: translateY(1px); }
+
+.btn.primary { background: var(--ink); border-color: var(--ink); color: var(--paper); }
+.btn.primary:hover { background: var(--accent); border-color: var(--accent); color: var(--paper); }
+
+/* ---------- disclosure plate: a real working component, not a mock ---------- */
+
+.plate {
+  border: 1px solid var(--line);
+  background: var(--surface);
+  border-radius: var(--r);
+  box-shadow: var(--shadow);
+  overflow: hidden;
+}
+
+.plate-head {
+  display: flex; flex-wrap: wrap; align-items: baseline;
+  justify-content: space-between; gap: 0.4rem 1rem;
+  padding: 0.8rem 1.05rem;
+  border-bottom: 1px solid var(--line-soft);
+  font-family: var(--font-mono); font-size: var(--step--1);
+  color: var(--muted); letter-spacing: 0.05em;
+}
+.plate-head strong { color: var(--ink); font-weight: 400; letter-spacing: 0.13em; text-transform: uppercase; }
+
+.levels { display: flex; flex-wrap: wrap; border-bottom: 1px solid var(--line-soft); background: var(--surface-2); }
+
+.level {
+  flex: 1 1 6.2rem; appearance: none; border: 0;
+  border-right: 1px solid var(--line-soft); background: transparent;
+  padding: 0.6rem 0.4rem;
+  font-family: var(--font-mono); font-size: var(--step--1);
+  letter-spacing: 0.09em; text-transform: uppercase;
+  color: var(--muted); cursor: pointer; position: relative;
+  transition: color 130ms ease, background 130ms ease;
+}
+.level:last-child { border-right: 0; }
+.level:hover { color: var(--ink); }
+.level[aria-pressed="true"] { color: var(--ink); background: var(--surface); }
+.level[aria-pressed="true"]::after {
+  content: ""; position: absolute; inset-inline: 0; bottom: -1px;
+  height: 2px; background: var(--accent);
+}
+
+.field {
+  display: grid;
+  grid-template-columns: minmax(0, 9rem) minmax(0, 1fr) 5.2rem;
+  align-items: center; gap: 0.6rem 0.9rem;
+  padding: 0.52rem 1.05rem;
+  border-bottom: 1px solid var(--line-soft);
+}
+.field:last-child { border-bottom: 0; }
+
+.fname { font-family: var(--font-mono); font-size: var(--step--1); color: var(--ink); overflow-wrap: anywhere; }
+.fval { font-family: var(--font-mono); font-size: var(--step--1); min-height: 1.4rem; display: flex; align-items: center; overflow: hidden; }
+.fval .plain { color: var(--accent); overflow-wrap: anywhere; }
+.fval .digest { color: var(--muted); overflow-wrap: anywhere; }
+
+.bar {
+  display: block; height: 1rem; width: 100%; max-width: 12rem;
+  background: var(--redact); border-radius: 1px;
+  transform-origin: left center;
+  animation: wipe 240ms cubic-bezier(0.22, 0.61, 0.36, 1);
+}
+@keyframes wipe { from { transform: scaleX(0.05); } to { transform: scaleX(1); } }
+
+.tag {
+  justify-self: end; font-family: var(--font-mono); font-size: 0.7rem;
+  letter-spacing: 0.11em; text-transform: uppercase;
+  padding: 0.14rem 0.4rem; border-radius: var(--r);
+  border: 1px solid var(--line); color: var(--muted); white-space: nowrap;
+}
+.tag.on { color: var(--accent); border-color: var(--accent); background: var(--accent-2); }
+
+.plate-foot {
+  padding: 0.75rem 1.05rem; border-top: 1px solid var(--line-soft);
+  background: var(--surface-2);
+  font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted);
+  display: flex; flex-wrap: wrap; gap: 0.3rem 1rem; justify-content: space-between;
+}
+.plate-foot b { color: var(--ink); font-weight: 400; font-variant-numeric: tabular-nums; }
+
+@media (max-width: 34rem) {
+  .field { grid-template-columns: minmax(0, 1fr) 5.2rem; }
+  .fname { grid-column: 1 / -1; }
+  .fval { grid-column: 1; }
+}
+
+/* ---------- steps: stacked, no numbering ---------- */
+
+.steps { display: grid; gap: 0; border-top: 1px solid var(--line-soft); max-width: var(--shell); }
+.step { display: grid; grid-template-columns: minmax(0, 16rem) minmax(0, 1fr); gap: 0.5rem 2.5rem; padding-block: 1.5rem; border-bottom: 1px solid var(--line-soft); }
+.step p { color: var(--muted); max-width: 52ch; }
+@media (max-width: 46rem) { .step { grid-template-columns: 1fr; } }
+
+/* ---------- backend stack ---------- */
+
+.stack { display: grid; gap: 2px; }
+
+.layer {
+  margin: 0; display: grid;
+  grid-template-columns: minmax(0, 14rem) minmax(0, 1fr);
+  gap: 0.35rem 1.2rem; align-items: baseline;
+  padding: 0.8rem 1.05rem;
+  background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--r);
+}
+.layer dt { font-family: var(--font-mono); font-size: var(--step--1); letter-spacing: 0.09em; text-transform: uppercase; color: var(--ink); margin: 0; }
+.layer dd { margin: 0; color: var(--muted); font-size: var(--step--1); font-family: var(--font-mono); }
+.layer.key { border-color: var(--accent); background: var(--accent-2); }
+.layer.key dt { color: var(--accent); }
+.layer.hold { opacity: 0.62; }
+@media (max-width: 40rem) { .layer { grid-template-columns: 1fr; } }
+
+/* ---------- status: asymmetric bento, three cells for three groups ---------- */
+
+.status-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 1rem; }
+.group { grid-column: span 1; padding: 1.15rem; border: 1px solid var(--line-soft); border-radius: var(--r); background: var(--surface); }
+.group.wide { grid-column: 1 / -1; background: var(--accent-2); border-color: var(--accent); }
+@media (max-width: 44rem) { .status-grid { grid-template-columns: 1fr; } .group, .group.wide { grid-column: 1 / -1; } }
+
+.group h3 { font-size: var(--step-1); }
+.group p { color: var(--muted); font-size: var(--step--1); margin-top: 0.35rem; max-width: 46ch; }
+
+.chips { display: flex; flex-wrap: wrap; gap: 0.35rem; margin-top: 0.9rem; }
+.chip {
+  font-family: var(--font-mono); font-size: 0.74rem;
+  padding: 0.2rem 0.5rem; border-radius: var(--r);
+  border: 1px solid var(--line); color: var(--ink); background: var(--paper);
+  white-space: nowrap;
+}
+.group.wide .chip { border-color: var(--accent); color: var(--accent); background: transparent; }
+
+/* ---------- code ---------- */
+
+pre {
+  margin: 0; padding: 1.05rem 1.1rem;
+  background: var(--surface); border: 1px solid var(--line-soft); border-radius: var(--r);
+  overflow-x: auto; font-family: var(--font-mono); font-size: var(--step--1);
+  line-height: 1.72; color: var(--text); tab-size: 2;
+}
+pre .c { color: var(--muted); }
+pre .k { color: var(--muted); font-style: italic; }
+pre .s { color: var(--accent); }
+
+.split { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.25fr); gap: clamp(1.5rem, 4vw, 3rem); align-items: start; }
+@media (max-width: 56rem) { .split { grid-template-columns: 1fr; } }
+
+/* ---------- footer ---------- */
+
+.foot {
+  border-top: 1px solid var(--line-soft);
+  padding-block: 2.5rem 3.5rem;
+  display: flex; flex-wrap: wrap; gap: 1.4rem 2.5rem; justify-content: space-between;
+  font-family: var(--font-mono); font-size: var(--step--1); color: var(--muted);
+}
+.foot a { color: var(--muted); text-decoration: none; }
+.foot ul a { display: block; }
+.foot ul { list-style: none; margin: 0; padding: 0; display: grid; gap: 0.3rem; }
+.foot a:hover { color: var(--accent); }
+.foot h4 { margin: 0 0 0.55rem; font-family: var(--font-mono); font-size: var(--step--1); font-weight: 400; letter-spacing: 0.13em; text-transform: uppercase; color: var(--ink); }
+.foot .wordmark { margin-bottom: 0.6rem; }
+</style>
+</head>
+<body>
+
+<div class="shell">
+
+  <header class="masthead">
+    <a class="wordmark" href="#top">
+      <svg class="seal" id="mark" width="24" height="24" viewBox="0 0 100 100" aria-hidden="true"></svg>
+      Sigil
+    </a>
+    <nav>
+      <a href="#how" class="opt">How it works</a>
+      <a href="#backends" class="opt">Backends</a>
+      <a href="#status">Status</a>
+      <a href="https://github.com/zkos-labs/sigil">GitHub</a>
+    </nav>
+  </header>
+
+  <section class="hero" id="top">
+    <div class="hero-grid">
+      <div>
+        <h1>Prove what happened. Reveal <b>only</b> what you choose.</h1>
+        <p class="lede">
+          Record the full history of any asset, then disclose exactly the fields
+          a viewer is entitled to.
+        </p>
+        <div class="actions">
+          <a class="btn primary" href="#start">Get started</a>
+          <a class="btn" href="https://github.com/zkos-labs/sigil/blob/main/docs/PRD.md">Docs</a>
+        </div>
+      </div>
+
+      <!-- Real working component, not a screenshot mock. Mirrors @sigil/policy. -->
+      <div class="plate">
+        <div class="plate-head">
+          <strong>Sample record</strong>
+          <span>coffee lot, policy <code>coffee.v1</code></span>
+        </div>
+
+        <div class="levels" role="group" aria-label="Recipient visibility level">
+          <button class="level" type="button" data-level="0" aria-pressed="false">Private</button>
+          <button class="level" type="button" data-level="1" aria-pressed="false">Partner</button>
+          <button class="level" type="button" data-level="2" aria-pressed="true">Auditor</button>
+          <button class="level" type="button" data-level="3" aria-pressed="false">Regulator</button>
+          <button class="level" type="button" data-level="4" aria-pressed="false">Public</button>
+        </div>
+
+        <div id="fields" aria-live="polite"></div>
+
+        <div class="plate-foot">
+          <span>Disclosed <b id="count">0</b> of <b>7</b> fields</span>
+          <span id="recipient">did:sigil:auditor</span>
+        </div>
+      </div>
+    </div>
+  </section>
+
+</div>
+
+<div class="sec">
+  <div class="shell">
+    <div class="sec-in">
+      <h2 style="max-width:22ch">Verifiable or confidential. Most systems make you pick one.</h2>
+      <div class="cols">
+        <p class="dek">
+          Public ledgers make everything provable and everything visible, which rules
+          them out for competitively sensitive data. Private databases keep that data
+          quiet but ask every verifier to trust the operator. Domain platforms solve it
+          once, inside one silo, with disclosure rules nobody outside can inspect.
+        </p>
+        <p class="dek">
+          Regulation now asks for both at once. The EU Digital Product Passport, the EU
+          AI Act, and SEC climate rules all want histories that an outside party can
+          check without handing that party the whole record.
+        </p>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sec" id="how">
+  <div class="shell">
+    <div class="sec-in">
+      <h2 style="max-width:24ch">Generate locally. Commit through a confidential backend.</h2>
+
+      <div class="steps">
+        <div class="step">
+          <h3>Record the history</h3>
+          <p>
+            Every assertion is an append only event on a graph, signed with Ed25519 and
+            addressed by a decentralized identifier. Nothing is edited and nothing is
+            deleted, so the history stays tamper evident by construction.
+          </p>
+        </div>
+        <div class="step">
+          <h3>Commit the proof, not the data</h3>
+          <p>
+            Sigil computes Merkle roots over the record and commits them through the
+            active confidential backend. The raw provenance never has to leave your
+            infrastructure to become verifiable.
+          </p>
+        </div>
+        <div class="step">
+          <h3>Disclose against a policy</h3>
+          <p>
+            A recipient asks for fields. The policy engine decides what they may see,
+            and the backend returns a receipt recording who received which fields when.
+            That receipt becomes part of the audit trail itself.
+          </p>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="sec" id="backends">
+  <div class="shell">
+    <div class="sec-in">
+      <h2 style="max-width:24ch">The confidential layer is a component, not a commitment.</h2>
+      <p class="dek">
+        Sigil owns the provenance model, the trust graph, the attestation schema, and
+        the disclosure logic. The network that proves and settles sits underneath a
+        single interface of five methods, so swapping it is an adapter change rather
+        than a redesign.
+      </p>
+
+      <div class="stack">
+        <dl class="layer"><dt>Sigil runtime</dt><dd>graph, policy, identity, evidence</dd></dl>
+        <dl class="layer"><dt>Backend interface</dt><dd>commit, query, verify, disclose, revoke</dd></dl>
+        <dl class="layer key"><dt>Aztec, active</dt><dd>Noir circuits, client side proving, planned for v0.3</dd></dl>
+        <dl class="layer hold"><dt>Midnight, on hold</dt><dd>Compact circuits, specified and deferred to v0.6</dd></dl>
+        <dl class="layer"><dt>Ethereum</dt><dd>settlement and proof finality</dd></dl>
+        <dl class="layer"><dt>Execution and interop</dt><dd>Ethereum, Solana, Cardano, Avalanche, local</dd></dl>
+      </div>
+
+      <p class="note">
+        Ethereum appears twice on purpose. It settles what the confidential backend
+        proves, and it is separately one substrate among several on which an
+        application may actually run.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="sec" id="status">
+  <div class="shell">
+    <div class="sec-in">
+      <h2 style="max-width:18ch">What ships today.</h2>
+      <p class="dek">
+        Sigil is early. The engine underneath is real and tested. The cryptographic
+        enforcement of disclosure is not built yet, and this page says so rather than
+        implying otherwise.
+      </p>
+
+      <div class="status-grid">
+        <div class="group wide">
+          <h3>Shipping now</h3>
+          <p>
+            The provenance engine works end to end today. Ed25519 identity, a SQLite
+            graph store, the five level policy ladder wired into the SDK, and a local
+            backend.
+          </p>
+          <div class="chips">
+            <code class="chip">@sigil/core</code>
+            <code class="chip">@sigil/crypto</code>
+            <code class="chip">@sigil/graph</code>
+            <code class="chip">@sigil/policy</code>
+            <code class="chip">@sigil/backend-local</code>
+            <code class="chip">@sigil/sdk</code>
+            <code class="chip">@sigil/cli</code>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>Planned for v0.3</h3>
+          <p>
+            The Aztec confidential backend and the Noir circuits that turn a disclosure
+            policy into constraints.
+          </p>
+          <div class="chips">
+            <code class="chip">@sigil/backend-aztec</code>
+            <code class="chip">noir</code>
+          </div>
+        </div>
+
+        <div class="group">
+          <h3>On hold for v0.6</h3>
+          <p>
+            Midnight stays specified as a second backend. It is deferred until that
+            ecosystem matures, not discarded.
+          </p>
+          <div class="chips">
+            <code class="chip">@sigil/backend-midnight</code>
+            <code class="chip">compact</code>
+          </div>
+        </div>
+      </div>
+
+      <p class="note">
+        Disclosure is policy gated today and returns <code>ProofType.None</code>. It
+        becomes cryptographically enforced when the confidential backend lands.
+      </p>
+    </div>
+  </div>
+</div>
+
+<div class="sec" id="start">
+  <div class="shell">
+    <div class="sec-in">
+      <div class="split">
+        <div>
+          <h2 style="max-width:14ch">Integrate once.</h2>
+          <p class="dek" style="margin-top:1rem">
+            One SDK call records a lot, one certifies it, one discloses a subset to an
+            auditor. The same code runs against any backend.
+          </p>
+          <div class="actions">
+            <a class="btn primary" href="https://github.com/zkos-labs/sigil">Get started</a>
+          </div>
+        </div>
+
+<pre><code><span class="c">// record a lot, certify it, then disclose to an auditor</span>
+<span class="k">const</span> sigil = <span class="k">new</span> Sigil({ backend: <span class="s">"local"</span> });
+
+<span class="k">const</span> lot = <span class="k">await</span> sigil.asset.create({
+  type: <span class="s">"batch-lot"</span>,
+  owner: farmerDid,
+  metadata: { origin: <span class="s">"Huila, CO"</span>, variety: <span class="s">"Caturra"</span> },
+  visibility: VisibilityLevel.Partner,
+});
+
+<span class="k">await</span> sigil.event.record({ assetId: lot.id, type: <span class="s">"certified"</span>,
+  metadata: { scheme: <span class="s">"FairTrade"</span> } });
+
+<span class="k">const</span> receipt = <span class="k">await</span> sigil.disclose({
+  assetId: lot.id,
+  recipient: auditorDid,
+  level: VisibilityLevel.Auditor,
+  fields: [<span class="s">"origin"</span>, <span class="s">"cert"</span>],
+});</code></pre>
+      </div>
+    </div>
+  </div>
+</div>
+
+<div class="shell">
+  <footer class="foot">
+    <div>
+      <a class="wordmark" href="#top">
+        <svg class="seal" width="22" height="22" viewBox="0 0 100 100" aria-hidden="true" id="mark2"></svg>
+        Sigil
+      </a>
+      <p>Confidential provenance infrastructure.<br>ZKOS Labs. Apache 2.0.</p>
+    </div>
+    <div>
+      <h4>Docs</h4>
+      <ul>
+        <li><a href="https://github.com/zkos-labs/sigil/blob/main/docs/ARCHITECTURE.md">Architecture</a></li>
+        <li><a href="https://github.com/zkos-labs/sigil/blob/main/docs/POLICY.md">Policy</a></li>
+        <li><a href="https://github.com/zkos-labs/sigil/blob/main/docs/CRYPTOGRAPHY.md">Cryptography</a></li>
+        <li><a href="https://github.com/zkos-labs/sigil/blob/main/docs/BACKENDS.md">Backends</a></li>
+      </ul>
+    </div>
+    <div>
+      <h4>Project</h4>
+      <ul>
+        <li><a href="https://github.com/zkos-labs/sigil/blob/main/docs/ROADMAP.md">Roadmap</a></li>
+        <li><a href="https://github.com/zkos-labs/sigil/tree/main/docs/RFC">RFCs</a></li>
+        <li><a href="https://github.com/zkos-labs/sigil/blob/main/docs/CONTRIBUTING.md">Contributing</a></li>
+        <li><a href="https://github.com/zkos-labs/sigil">GitHub</a></li>
+      </ul>
+    </div>
+  </footer>
+</div>
+
+<script>
+(function () {
+  "use strict";
+
+  /* Seal mark: a single simple geometric monogram, generated rather than
+     hand drawn as path data. */
+  function drawSeal(node) {
+    if (!node) return;
+    var ns = "http://www.w3.org/2000/svg";
+    function el(name, attrs) {
+      var n = document.createElementNS(ns, name);
+      for (var k in attrs) n.setAttribute(k, attrs[k]);
+      return n;
+    }
+    node.appendChild(el("circle", { class: "ring", cx: 50, cy: 50, r: 46, "stroke-width": 4 }));
+    node.appendChild(el("circle", { class: "core", cx: 50, cy: 50, r: 17, "stroke-width": 7 }));
+    for (var i = 0; i < 24; i++) {
+      var a = (i / 24) * Math.PI * 2;
+      var r1 = 27, r2 = i % 3 === 0 ? 39 : 34;
+      node.appendChild(el("line", {
+        class: "tick",
+        x1: (50 + Math.cos(a) * r1).toFixed(2), y1: (50 + Math.sin(a) * r1).toFixed(2),
+        x2: (50 + Math.cos(a) * r2).toFixed(2), y2: (50 + Math.sin(a) * r2).toFixed(2),
+        "stroke-width": i % 3 === 0 ? 5 : 3, "stroke-linecap": "round"
+      }));
+    }
+  }
+  drawSeal(document.getElementById("mark"));
+  drawSeal(document.getElementById("mark2"));
+
+  /* Disclosure demo. Mirrors @sigil/policy: a viewer at level L receives a
+     field when L is at or above field.visibleAt. Fields with no rule are
+     denied by default. Values below are sample data, not real measurements. */
+
+  var FIELDS = [
+    { name: "type",          at: 0,    action: "reveal", value: "batch-lot" },
+    { name: "origin",        at: 1,    action: "reveal", value: "Huila, CO" },
+    { name: "variety",       at: 1,    action: "reveal", value: "Caturra" },
+    { name: "scheme",        at: 2,    action: "reveal", value: "FairTrade" },
+    { name: "inspectionPdf", at: 2,    action: "hash",   value: "sha256:9f2c41ab" },
+    { name: "emissions",     at: 3,    action: "reveal", value: "412 kg" },
+    { name: "farmGatePrice", at: null, action: "redact", value: "" }
+  ];
+
+  var RECIPIENTS = ["private", "partner", "auditor", "regulator", "public"];
+  var fieldsEl = document.getElementById("fields");
+  var countEl = document.getElementById("count");
+  var recipientEl = document.getElementById("recipient");
+  var buttons = Array.prototype.slice.call(document.querySelectorAll(".level"));
+
+  function render(level) {
+    fieldsEl.textContent = "";
+    var shown = 0;
+
+    FIELDS.forEach(function (f) {
+      var visible = f.at !== null && level >= f.at;
+      if (visible) shown++;
+
+      var row = document.createElement("div");
+      row.className = "field";
+
+      var name = document.createElement("div");
+      name.className = "fname";
+      name.textContent = f.name;
+
+      var val = document.createElement("div");
+      val.className = "fval";
+      var tag = document.createElement("span");
+      tag.className = "tag";
+
+      if (!visible) {
+        var bar = document.createElement("span");
+        bar.className = "bar";
+        val.appendChild(bar);
+        tag.textContent = "redact";
+      } else if (f.action === "hash") {
+        var d = document.createElement("span");
+        d.className = "digest";
+        d.textContent = f.value;
+        val.appendChild(d);
+        tag.textContent = "hash";
+      } else {
+        var p = document.createElement("span");
+        p.className = "plain";
+        p.textContent = f.value;
+        val.appendChild(p);
+        tag.textContent = "reveal";
+        tag.classList.add("on");
+      }
+
+      row.appendChild(name);
+      row.appendChild(val);
+      row.appendChild(tag);
+      fieldsEl.appendChild(row);
+    });
+
+    countEl.textContent = String(shown);
+    recipientEl.textContent = "did:sigil:" + RECIPIENTS[level];
+  }
+
+  buttons.forEach(function (btn) {
+    btn.addEventListener("click", function () {
+      buttons.forEach(function (b) { b.setAttribute("aria-pressed", String(b === btn)); });
+      render(Number(btn.dataset.level));
+    });
+  });
+
+  render(2);
+})();
+</script>
+
+</body>
+</html>

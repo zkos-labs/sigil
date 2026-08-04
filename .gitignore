@@ -5,3 +5,9 @@ coverage/
 *.tsbuildinfo
 .sigil/
 *.log
+.vercel
+
+# LaTeX build artifacts
+paper/*.aux
+paper/*.out
+paper/*.pdf
