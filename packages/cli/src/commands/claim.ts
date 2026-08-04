@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { Sigil } from "@sigil/sdk";
+import type { BackendName } from "@sigil/core";
 import { loadConfig } from "../config.js";
 
 export function claimCommand() {
@@ -20,7 +21,7 @@ export function claimCommand() {
         options: { visibility: string },
       ) => {
         const config = await loadConfig();
-        const sigil = new Sigil({ backend: config.backend as "local" | "midnight" | "mock" });
+        const sigil = new Sigil({ backend: config.backend as BackendName });
 
         const visibility = parseInt(options.visibility, 10) as 0 | 1 | 2 | 3 | 4;
         const claim = await sigil.claim.make({
@@ -39,7 +40,7 @@ export function claimCommand() {
     .argument("<id>", "Claim ID")
     .action(async (id: string) => {
       const config = await loadConfig();
-      const sigil = new Sigil({ backend: config.backend as "local" | "midnight" | "mock" });
+      const sigil = new Sigil({ backend: config.backend as BackendName });
 
       const claim = await sigil.claim.get(id);
       if (!claim) {

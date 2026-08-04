@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { Sigil } from "@sigil/sdk";
+import type { BackendName } from "@sigil/core";
 import { loadConfig } from "../config.js";
 
 export function eventCommand() {
@@ -13,7 +14,7 @@ export function eventCommand() {
     .option("--metadata <json>", "JSON metadata for the event")
     .action(async (assetId: string, type: string, options: { metadata?: string }) => {
       const config = await loadConfig();
-      const sigil = new Sigil({ backend: config.backend as "local" | "midnight" | "mock" });
+      const sigil = new Sigil({ backend: config.backend as BackendName });
 
       const metadata = options.metadata
         ? (JSON.parse(options.metadata) as Record<string, unknown>)
@@ -29,7 +30,7 @@ export function eventCommand() {
     .argument("<assetId>", "Asset ID")
     .action(async (assetId: string) => {
       const config = await loadConfig();
-      const sigil = new Sigil({ backend: config.backend as "local" | "midnight" | "mock" });
+      const sigil = new Sigil({ backend: config.backend as BackendName });
 
       const events = await sigil.event.list(assetId);
       process.stdout.write(JSON.stringify(events, null, 2) + "\n");

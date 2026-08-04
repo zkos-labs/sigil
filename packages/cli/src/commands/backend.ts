@@ -19,10 +19,12 @@ export function backendCommand() {
   command
     .command("use")
     .description("Switch the active backend")
-    .argument("<backend>", "Backend name (local or midnight)")
+    .argument("<backend>", "Backend name (local, aztec, or midnight)")
     .action(async (backend: string) => {
-      if (backend !== "local" && backend !== "midnight") {
-        process.stderr.write(`Unknown backend: ${backend}. Use 'local' or 'midnight'.\n`);
+      if (backend !== "local" && backend !== "aztec" && backend !== "midnight") {
+        process.stderr.write(
+          `Unknown backend: ${backend}. Use 'local', 'aztec', or 'midnight'.\n`,
+        );
         process.exit(1);
       }
 

@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { Sigil } from "@sigil/sdk";
+import type { BackendName } from "@sigil/core";
 import { loadConfig } from "../config.js";
 
 export function graphCommand() {
@@ -11,7 +12,7 @@ export function graphCommand() {
     .argument("<assetId>", "Asset ID")
     .action(async (assetId: string) => {
       const config = await loadConfig();
-      const sigil = new Sigil({ backend: config.backend as "local" | "midnight" | "mock" });
+      const sigil = new Sigil({ backend: config.backend as BackendName });
 
       const chain = await sigil.graph.traverse(assetId);
       process.stdout.write(JSON.stringify(chain, null, 2) + "\n");
@@ -24,7 +25,7 @@ export function graphCommand() {
     .option("--format <fmt>", "Output format: dot or json", "dot")
     .action(async (assetId: string, options: { format: string }) => {
       const config = await loadConfig();
-      const sigil = new Sigil({ backend: config.backend as "local" | "midnight" | "mock" });
+      const sigil = new Sigil({ backend: config.backend as BackendName });
 
       const format = options.format as "dot" | "json";
       const output = await sigil.graph.export(assetId, format);

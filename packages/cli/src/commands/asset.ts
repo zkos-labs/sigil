@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { Sigil } from "@sigil/sdk";
+import type { BackendName } from "@sigil/core";
 import { loadConfig } from "../config.js";
 
 export function assetCommand() {
@@ -12,7 +13,7 @@ export function assetCommand() {
     .option("--owner <did>", "Owner DID")
     .action(async (type: string, options: { owner?: string }) => {
       const config = await loadConfig();
-      const sigil = new Sigil({ backend: config.backend as "local" | "midnight" | "mock" });
+      const sigil = new Sigil({ backend: config.backend as BackendName });
 
       const owner = options.owner ?? "did:sigil:cli";
       const asset = await sigil.asset.create({ type, owner });
@@ -25,7 +26,7 @@ export function assetCommand() {
     .argument("<id>", "Asset ID")
     .action(async (id: string) => {
       const config = await loadConfig();
-      const sigil = new Sigil({ backend: config.backend as "local" | "midnight" | "mock" });
+      const sigil = new Sigil({ backend: config.backend as BackendName });
 
       const asset = await sigil.asset.get(id);
       if (!asset) {

@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { Sigil } from "@sigil/sdk";
+import type { BackendName } from "@sigil/core";
 import { loadConfig } from "../config.js";
 
 export function discloseCommand() {
@@ -18,7 +19,7 @@ export function discloseCommand() {
         options: { level: string; fields?: string },
       ) => {
         const config = await loadConfig();
-        const sigil = new Sigil({ backend: config.backend as "local" | "midnight" | "mock" });
+        const sigil = new Sigil({ backend: config.backend as BackendName });
 
         const level = parseInt(options.level, 10) as 0 | 1 | 2 | 3 | 4;
         const fields = options.fields

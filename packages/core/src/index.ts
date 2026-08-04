@@ -35,6 +35,7 @@ export enum ProofType {
   Ed25519 = "ed25519",
   Secp256k1 = "secp256k1",
   Did = "did",
+  AztecZk = "aztec-zk",
   MidnightZk = "midnight-zk",
   None = "none",
 }
@@ -215,13 +216,23 @@ export interface DiscloseParams {
   fields: string[];
 }
 
+export type BackendName = "local" | "aztec" | "midnight" | "mock";
+
 export interface SigilConfig {
-  backend: "local" | "midnight" | "mock";
+  backend: BackendName;
   crypto?: CryptoProvider;
   graph?: GraphStore;
   policy?: PolicyEngine;
 }
 
+export interface AztecConfig {
+  network: "sandbox" | "testnet" | "mainnet";
+  pxeUrl?: string;
+  l1RpcUrl?: string;
+  accountAddress?: string;
+}
+
+// On hold — Midnight is a deferred alternate confidential backend. See RFC 0003.
 export interface MidnightConfig {
   network: "testnet" | "mainnet";
   walletPath?: string;

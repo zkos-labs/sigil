@@ -1,5 +1,6 @@
 import { Command } from "commander";
 import { Sigil } from "@sigil/sdk";
+import type { BackendName } from "@sigil/core";
 import { loadConfig } from "../config.js";
 
 export function attestCommand() {
@@ -10,7 +11,7 @@ export function attestCommand() {
     .argument("<claimId>", "Claim ID")
     .action(async (claimId: string) => {
       const config = await loadConfig();
-      const sigil = new Sigil({ backend: config.backend as "local" | "midnight" | "mock" });
+      const sigil = new Sigil({ backend: config.backend as BackendName });
 
       const attestation = await sigil.attest(claimId);
       process.stdout.write(JSON.stringify(attestation, null, 2) + "\n");

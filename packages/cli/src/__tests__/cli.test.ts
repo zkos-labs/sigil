@@ -63,6 +63,14 @@ describe("sigil CLI", () => {
     });
 
     it("switches backend and persists it across commands", async () => {
+      const useOut = await run("backend", "use", "aztec");
+      expect(useOut).toContain("Switched backend to: aztec");
+
+      const statusOut = await run("backend", "status");
+      expect(JSON.parse(statusOut)).toEqual({ backend: "aztec" });
+    });
+
+    it("still accepts the deferred midnight backend", async () => {
       const useOut = await run("backend", "use", "midnight");
       expect(useOut).toContain("Switched backend to: midnight");
 
