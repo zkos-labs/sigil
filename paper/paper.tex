@@ -53,17 +53,21 @@ data) and centralized opacity (which precludes independent verification).  Sigil
 resolves this tension through a modular architecture featuring a pluggable
 backend interface, an event-sourced graph-native provenance model, Ed25519-based
 decentralized identity, Merkle tree inclusion proofs, and JSON-defined
-disclosure policies. Sigil is a multichain provenance layer anchored by the
-Midnight Network: applications running on Ethereum, Solana, Cardano, or other
-ecosystems generate verifiable provenance through Sigil, while Midnight serves
-as the confidential trust anchor for commitments, selective disclosure, and
-zero-knowledge verification. We present the system architecture, formal graph model,
+disclosure policies. Sigil is a multichain provenance layer with a pluggable
+\emph{confidential execution layer}: applications running on Ethereum, Solana,
+Cardano, or other ecosystems generate verifiable provenance through Sigil, while
+an interchangeable confidential backend handles commitments, selective
+disclosure, and zero-knowledge verification.  We realize this layer on the
+Aztec Network -- a privacy-first Ethereum layer-2 whose contracts are written in
+Noir and whose private functions execute client-side -- and specify Midnight as
+a second backend, so that no single ecosystem is load-bearing for the
+design. We present the system architecture, formal graph model,
 cryptographic primitives, policy framework, and empirical benchmarks
 demonstrating asset creation throughput of approximately 500 assets per second
 and sub-50ms graph traversal latency at depth 100. Sigil advances the state of
 the art as the first backend-agnostic infrastructure for confidential
-provenance that roots its confidentiality in a zero-knowledge trust anchor
-while remaining portable across execution backends.
+provenance that roots its confidentiality in a zero-knowledge backend while
+remaining portable across both execution substrates and confidential backends.
 \end{abstract}
 
 %% ============================================================================
@@ -118,11 +122,12 @@ database-specific, domain-tied or general-purpose -- but never all four
 properties simultaneously.
 
 \textbf{Our contribution.} Sigil addresses this gap through five key
-innovations.  At the center of these innovations is the \emph{Midnight
-Network}, which Sigil adopts as its confidential \emph{trust anchor}: the
-zero-knowledge root in which every commitment is anchored and against which
-every selective disclosure is verified, so that provenance generated on any
-execution substrate can be confidentially verified everywhere.  First, it
+innovations.  At the center of these innovations is a pluggable
+\emph{confidential execution layer}: the zero-knowledge root in which every
+commitment is anchored and against which every selective disclosure is
+verified, so that provenance generated on any execution substrate can be
+confidentially verified everywhere.  Crucially, the network occupying that
+layer is a replaceable component rather than a premise of the design.  First, it
 introduces a \emph{backend-agnostic provenance engine}
 with a pluggable interface that abstracts over blockchain networks, local
 databases, content-addressable storage, and future backends.  Second, it
@@ -131,13 +136,18 @@ assertion is an append-only event forming a directed acyclic graph -- enabling
 temporal and structural queries impossible with flat ledger models.  Third, it
 provides \emph{programmable selective disclosure} through a JSON-based policy
 language that defines field-level visibility rules evaluated against viewer
-attributes.  Fourth, it establishes the \emph{Midnight Network} as a
-confidential \emph{trust anchor} rather than one backend among many: Sigil roots
-its confidentiality in Midnight, anchoring commitments and generating
-zero-knowledge selective-disclosure proofs via Midnight's Kachina protocol, so
-that applications executing on other chains -- Ethereum, Solana, Cardano, and
-beyond -- obtain Midnight-level confidential provenance through Sigil without
-revealing underlying data~\cite{midnight2023}.  Fifth, it
+attributes.  Fourth, it separates the \emph{provenance model} from the
+\emph{confidential backend} that enforces it: Sigil owns the trust graph,
+attestation schema, and disclosure logic, while commitment anchoring and
+zero-knowledge proof generation are delegated to an interchangeable
+confidential network beneath the same five-method interface.  We realize this
+on the \emph{Aztec Network}~\cite{aztec2023}, whose Noir~\cite{noir2023}
+contracts execute privately on the client and settle to Ethereum, and specify
+Midnight~\cite{midnight2023} as a second backend, so that applications
+executing on other chains -- Ethereum, Solana, Cardano, and beyond -- obtain
+confidential provenance through Sigil without revealing underlying data, and so
+that the viability of the architecture is not tied to the fortunes of any one
+network.  Fifth, it
 delivers a \emph{complete open-source implementation} in TypeScript spanning a
 zero-dependency core library, cryptographic toolkit (Ed25519, SHA-256, DIDs,
 Merkle trees), SQLite-backed graph store, CLI, and SDK.
@@ -221,27 +231,45 @@ regulatory compliance~\cite{gabay2023}, digital identity with data
 minimization~\cite{babel2023}, and machine learning model
 verification~\cite{zhang2024}.
 
-The Midnight Network~\cite{midnight2023}, developed by Input Output Global,
-introduces a data-protection-first blockchain architecture based on the Kachina
-protocol.  Midnight combines a public ledger for unshielded state with
-zero-knowledge circuits for confidential computation.  Smart contracts written
-in the Compact language can declare both public and private state, with the
-runtime automatically generating ZK proofs for transitions involving private
-data.  The network provides native support for selective disclosure, allowing
-contract authors to define exactly which data fields are revealed to which
-observers.  These properties -- public/private state separation, native
-selective disclosure, and automatic Kachina-based proof generation -- make
-Midnight uniquely suited to serve as Sigil's confidential \emph{trust anchor},
-the role it occupies throughout this work: the root in which Sigil anchors its
-commitments and against which every zero-knowledge disclosure is verified,
-independent of the chain on which an application executes.
+The Aztec Network~\cite{aztec2023} is a privacy-first Ethereum layer-2 built
+for confidential smart contracts.  A single Aztec contract may declare both
+private and public state: private state is held as encrypted, UTXO-style notes,
+while public state is executed by a public virtual machine.  Contracts are
+written in Aztec.nr, a framework over the \emph{Noir}~\cite{noir2023}
+zero-knowledge domain-specific language, and proved with a
+PLONK-family~\cite{gabizon2019} proving system.  The property most consequential
+for provenance is \emph{where} proving happens: private functions execute
+client-side in the Private Execution Environment (PXE), so private inputs never
+leave the holder's machine, and no third-party prover service is interposed
+between a data holder and a proof about that data.  Aztec settles to Ethereum,
+which additionally places Sigil's disclosures within reach of the identity,
+attestation, and wallet standards already established on that
+chain~\cite{buterin2014}.  These properties -- private/public state separation,
+native selective disclosure, client-side proving, and L1 settlement -- make
+Aztec the confidential backend Sigil realizes first.
+
+A comparable design is the Midnight Network~\cite{midnight2023}, developed by
+Input Output Global, which introduces a data-protection-first blockchain
+architecture based on the Kachina protocol.  Midnight likewise combines a public
+ledger for unshielded state with zero-knowledge circuits for confidential
+computation; contracts written in the Compact language declare both public and
+private state, and the runtime automatically generates ZK proofs for
+transitions involving private data.  Its selective-disclosure model maps onto
+Sigil's policy semantics as directly as Aztec's does, and we therefore specify
+it as a second confidential backend.  Its adoption is deferred rather than
+rejected: the developer ecosystem, wallets, and identity and attestation
+integrations that a provenance layer must interoperate with are, at present,
+substantially more established around Ethereum.  Retaining a fully specified
+alternative is deliberate — it is what distinguishes a genuinely pluggable
+confidential layer from a single anchor with an abstraction placed in front of
+it.
 
 Confidential computing through hardware-based Trusted Execution Environments
 (TEEs)~\cite{liu2023} provides an alternative approach to privacy-preserving
 computation.  While TEEs offer lower latency than ZKPs, they introduce hardware
 trust assumptions and remain vulnerable to side-channel attacks.  Sigil's
-architecture is designed to accommodate both ZKP-based backends (such as
-Midnight) and TEE-based backends through its pluggable interface.
+architecture is designed to accommodate ZKP-based backends (such as Aztec and
+Midnight) and TEE-based backends alike through its pluggable interface.
 
 \subsection{Supply Chain and ESG Systems}
 
@@ -312,7 +340,7 @@ Sigil adopts a six-layer architecture that cleanly separates concerns while
 enabling end-to-end provenance workflows.  Figure~\ref{fig:layers} illustrates
 the layered structure.
 
-\begin{figure}[t]
+\begin{figure*}[t]
 \centering
 \begin{tikzpicture}[
   node distance=0.3cm,
@@ -339,12 +367,16 @@ the layered structure.
 \node[box, fill=teal!35, below=of l3] (l4)
   {\textbf{Backend Interface}\qquad commit, query, verify, disclose, revoke};
 
-% Layer 5: Trust Anchor
+% Layer 5: Confidential Execution
 \node[box, fill=teal!60, below=of l4] (l5)
-  {\textbf{Trust Anchor Layer}\qquad Midnight Network (confidential ZK anchor)};
+  {\textbf{Confidential Execution}\qquad Aztec (active) \textbar{} Midnight (deferred)};
 
-% Layer 6: Execution / Interoperability
-\node[box, fill=teal!35, below=of l5] (l6)
+% Layer 6: Settlement
+\node[box, fill=teal!45, below=of l5] (l6)
+  {\textbf{Settlement}\qquad Ethereum (state and proof finality)};
+
+% Layer 7: Execution / Interoperability
+\node[box, fill=teal!35, below=of l6] (l7)
   {\textbf{Execution / Interoperability}\qquad Ethereum \textbar{} Solana \textbar{} Cardano \textbar{} Avalanche \textbar{} Local};
 
 % Bidirectional arrows between layers
@@ -352,17 +384,21 @@ the layered structure.
 \draw[arrow] (l2.south) -- (l3.north) node[midway,right,font=\tiny] {data flow};
 \draw[arrow] (l3.south) -- (l4.north) node[midway,right,font=\tiny] {data flow};
 \draw[arrow] (l4.south) -- (l5.north) node[midway,right,font=\tiny] {data flow};
-\draw[arrow] (l5.south) -- (l6.north) node[midway,right,font=\tiny] {data flow};
+\draw[arrow] (l5.south) -- (l6.north) node[midway,right,font=\tiny] {settlement};
+\draw[arrow] (l6.south) -- (l7.north) node[midway,right,font=\tiny] {data flow};
 
 \end{tikzpicture}
-\caption{System Architecture. Sigil's six-layer design separates application
+\caption{System Architecture. Sigil's seven-layer design separates application
   logic, developer APIs, provenance computation, backend abstraction, the
-  Midnight trust anchor, and the execution/interoperability layer where
-  applications run.  Everything ultimately anchors into Midnight regardless of
-  where the application executes.  Bidirectional data flow arrows indicate the
-  request-response communication pattern between adjacent layers.}
+  confidential execution layer, settlement, and the execution/interoperability
+  layer where applications run.  Provenance ultimately commits through whichever
+  confidential backend is active, regardless of where the application executes;
+  that backend is interchangeable.  Ethereum appears twice in distinct roles --
+  as settlement beneath the confidential backend, and as one execution substrate
+  among several.  Data flow arrows indicate the request-response communication
+  pattern between adjacent layers.}
 \label{fig:layers}
-\end{figure}
+\end{figure*}
 
 The \textbf{Application Layer} represents domain-specific consumers: supply
 chain tracking systems, ESG reporting platforms, AI model registries,
@@ -376,15 +412,20 @@ determines what data each viewer may access. The \textbf{Backend Interface
 Layer} defines a clean abstraction with five canonical operations --
 \texttt{commit}, \texttt{query}, \texttt{verify}, \texttt{disclose}, and
 \texttt{revoke} -- that every backend adapter must implement. The
-\textbf{Trust Anchor Layer} is the confidential root of the system: the Midnight
-Network anchors commitments, executes selective-disclosure circuits, and
-generates and verifies the zero-knowledge proofs on which Sigil's
-confidentiality guarantees depend. The \textbf{Execution / Interoperability
+\textbf{Confidential Execution Layer} is the confidential root of the system:
+the active backend anchors commitments, executes selective-disclosure circuits,
+and generates and verifies the zero-knowledge proofs on which Sigil's
+confidentiality guarantees depend.  Aztec occupies this layer today and Midnight
+is specified as an alternative; because both sit behind the same five-method
+interface, replacing one is an adapter change rather than a redesign.  The
+\textbf{Settlement Layer} is where the confidential backend's state and proofs
+achieve finality -- Ethereum, in the case of Aztec -- giving disclosures an
+L1-verifiable path. The \textbf{Execution / Interoperability
 Layer} is where applications actually run -- Ethereum, Solana, Cardano,
-Avalanche, a local SQLite adapter for development, and others -- each anchoring
-its provenance \emph{into} Midnight through Sigil rather than serving as an
-independent root of trust. An application native to any chain thus obtains
-Midnight-level confidential provenance without that chain needing confidential
+Avalanche, a local SQLite adapter for development, and others -- each committing
+its provenance \emph{through} the confidential backend via Sigil rather than
+serving as an independent root of trust. An application native to any chain thus
+obtains confidential provenance without that chain needing confidential
 smart contracts of its own.
 
 \subsection{Pluggable Backend Interface}
@@ -406,7 +447,7 @@ backend adapter implements a common trait with five methods:
 \end{itemize}
 
 This interface enables the provenance engine to operate identically whether
-anchoring claims on Midnight, verifying signatures against Ethereum,
+anchoring claims on a confidential backend, verifying signatures against Ethereum,
 retrieving evidence from IPFS, or running entirely locally.  New backends can
 be added by implementing these five methods without modifying any provenance
 or policy logic.
@@ -419,6 +460,9 @@ Figure~\ref{fig:plugins} illustrates this extensibility model.
 
 \begin{figure}[t]
 \centering
+% The plugin ring is wider than a single IEEEtran column; scale it to fit so it
+% does not overflow into neighbouring text or figures.
+\resizebox{\columnwidth}{!}{%
 \begin{tikzpicture}[
   plugin/.style={
     draw, rectangle, minimum width=1.9cm, minimum height=0.6cm,
@@ -450,7 +494,8 @@ Figure~\ref{fig:plugins} illustrates this extensibility model.
   \draw (core) -- (p\i);
 }
 
-\end{tikzpicture}
+\end{tikzpicture}%
+}
 \caption{Plugin Architecture. Eight plugin categories connect to the central
   Sigil Core Engine, each providing a specialized capability through a common
   interface.  This design enables independent development and composition of
@@ -689,8 +734,9 @@ in the asset's provenance history without accessing the full event log.
 
 \subsection{Zero-Knowledge Integration}
 
-Sigil's Midnight trust anchor leverages the Kachina protocol for zero-knowledge
-selective disclosure.  When a viewer requests access to a subset of a claim's
+Sigil delegates zero-knowledge selective disclosure to its confidential
+backend -- Noir circuits proved client-side on Aztec, or Kachina-based Compact
+circuits on Midnight.  When a viewer requests access to a subset of a claim's
 fields under a disclosure policy, the backend generates a ZK proof
 $\Pi_{ZK}$ that:
 
@@ -829,20 +875,25 @@ against the viewer's attributes (role, organization, DID, credential
 presentations).  The \texttt{match(path, field)} function checks whether the
 rule's field path (which may include wildcards) matches the given field.
 
-\subsection{Integration with Midnight}
+\subsection{Integration with the Confidential Backend}
 
-At the Midnight trust anchor, policies are compiled into Compact contract circuits.
+In the confidential backend, policies are compiled into contract circuits --
+Noir circuits in an Aztec.nr contract on Aztec, or Compact circuits on Midnight.
 Each policy rule becomes a circuit constraint: a \texttt{reveal} rule
 generates a constraint that the revealed value matches the committed value at
 a specific position, a \texttt{hash} rule generates a constraint that the
 hash is correctly computed from the committed value, and a \texttt{redact}
 rule generates no constraint (the value is excluded from the proof).
 
-The Midnight runtime then generates a single ZK proof attesting that all
+The backend runtime then generates a single ZK proof attesting that all
 policy rules have been correctly applied.  The verifier checks this proof
 against the disclosed values and the public Merkle root.  This approach
 provides cryptographic assurance that the disclosure is exactly what the
-policy prescribed -- no more, no less.
+policy prescribed -- no more, no less.  Because the constraint mapping is
+identical under either circuit language, a disclosure policy is portable across
+confidential backends; on Aztec, proving additionally occurs client-side in the
+PXE, so the private witnesses -- the undisclosed fields -- never leave the
+holder's machine.
 
 %% ============================================================================
 %% 7. IMPLEMENTATION AND EVALUATION
@@ -871,9 +922,13 @@ concern and dependency:
         disclosure engine.
   \item \texttt{@sigil/backend-local}: Local backend adapter for development
         and testing, storing all data in the SQLite graph store.
-  \item \texttt{@sigil/backend-midnight}: Midnight Network trust-anchor adapter
-        integrating the Midnight.js SDK for contract deployment, circuit calls,
-        and ZK proof generation.
+  \item \texttt{@sigil/backend-aztec} (planned): Aztec confidential-backend
+        adapter, integrating \texttt{aztec.js} for contract deployment, circuit
+        calls, and client-side ZK proof generation, with \texttt{noir} holding
+        the corresponding Aztec.nr circuits.  A parallel
+        \texttt{@sigil/backend-midnight} adapter is specified but deferred.
+        Neither confidential backend is implemented in the current release; the
+        packages listed above constitute what has been built.
   \item \texttt{@sigil/sdk}: High-level developer API composing all
         lower-level packages into a fluent interface for asset creation, claim
         submission, attestation, and policy management.
@@ -903,9 +958,14 @@ Claim verification           &   1.7     & ms \\
 Merkle proof generation      &   0.3     & ms \\
 Merkle proof size            & 256       & bytes \\
 Policy evaluation (10 rules) &   0.8     & ms \\
-Full disclosure (Midnight)   & 840       & ms \\
+Full disclosure (Aztec)$^{\dagger}$ & 840       & ms \\
 \bottomrule
 \end{tabular}
+
+\vspace{2pt}
+{\footnotesize $^{\dagger}$Projected, not measured: no confidential backend is
+implemented in the current release.  All other rows are measured against the
+local backend.}
 \end{table}
 
 Asset creation throughput measures the end-to-end pipeline from SDK call to
@@ -923,12 +983,16 @@ Claim verification time covers signature verification plus Merkle inclusion
 proof verification against a tree of 10,000 leaves.  The fast verification
 time reflects the efficiency of Ed25519 batch verification.
 
-The full disclosure operation at the Midnight trust anchor encompasses the
-end-to-end ZK proof generation cycle: serializing the claim, submitting to the
-Midnight prover service (via the Midnight.js SDK), waiting for proof
-generation, and receiving the verified proof.  The approximately 840 ms
-latency is dominated by the ZK proving time and network round-trips to the
-prover service.
+The full disclosure figure is a projection rather than a measurement: it is
+the budget we design the confidential backend against, and it is reported here
+to make that target explicit, not to claim a result.  The operation encompasses
+the end-to-end ZK proof generation cycle: serializing the claim, executing the
+disclosure circuit, generating the proof, and verifying it.  On Aztec this cycle
+runs client-side in the PXE, so the projected latency is dominated by proving
+time rather than by round-trips to an external prover service -- a structural
+difference from a remote-prover design, which trades a network dependency for
+local compute.  Validating this figure against a working adapter is immediate
+future work.
 
 \subsection{Storage Efficiency}
 
@@ -967,17 +1031,21 @@ policy-compliant, and that Merkle proofs correctly demonstrate inclusion.
 These guarantees do not depend on any backend's honesty.
 
 What Sigil does \emph{not} guarantee: that the \emph{content} of a claim is
-truthful (Sigil verifies signatures, not facts), that the Midnight Network
-operates correctly (Midnight liveness depends on its consensus protocol), that
+truthful (Sigil verifies signatures, not facts), that the confidential backend
+operates correctly (its liveness depends on that network's consensus protocol
+and, for Aztec, on Ethereum settlement), that
 private keys remain secure (key compromise enables impersonation), or that
 policy evaluators are honest (policy \emph{enforcement} depends on the
 backend's integrity).
 
 These assumptions are explicit in the system's threat model.  The policy
 engine and verification logic are fully deterministic and can be independently
-audited.  Midnight serves as the system's confidential trust anchor by design;
-future work will explore self-hosted prover options and multi-prover
-architectures to reduce dependence on a single anchor.
+audited.  Two design choices bound the dependence this creates.  Client-side
+proving in the PXE removes the third-party prover from the trust boundary
+entirely: private witnesses are never disclosed to an external proving service.
+And because the confidential layer is pluggable, a second backend is already
+specified rather than hypothetical, so dependence on any single network is a
+migration cost rather than a redesign.
 
 \subsection{Limitations}
 
@@ -986,8 +1054,11 @@ First, the graph store is a single-node SQLite database: there is no
 distributed consensus, no replication, and no fault tolerance.  A compromised
 or failing node loses availability (though not integrity, since claims are
 signed and Merkle roots are anchored externally).  Second, the system depends
-on the Midnight Network as its trust anchor for ZK proofs; users who cannot
-access Midnight lose the selective disclosure capability.  Third, the TypeScript implementation,
+on a confidential backend for ZK proofs, and none is implemented yet; until one
+ships, selective disclosure is policy-gated but not cryptographically enforced.
+The pluggable design bounds but does not eliminate this: a deployment that can
+reach no confidential backend loses the selective-disclosure capability,
+whichever networks are specified.  Third, the TypeScript implementation,
 while developer-accessible, is not suitable for performance-critical
 environments where sub-millisecond latency is required.  Fourth, DIDs are
 currently resolved through a simple registry rather than a full DID method
@@ -1042,7 +1113,7 @@ addresses an urgent and growing need: the ability to provide cryptographically
 verifiable provenance trails while protecting sensitive business data through
 programmable, policy-driven disclosure.  The system's six-layer architecture,
 event-sourced graph model, Ed25519-based identity framework, Merkle tree
-inclusion proofs, and Midnight Network trust anchor -- into which applications
+inclusion proofs, and pluggable confidential backend -- through which applications
 on any execution chain anchor their provenance -- together form a
 comprehensive solution that advances beyond the false binary of public
 transparency versus centralized opacity.
@@ -1050,7 +1121,7 @@ transparency versus centralized opacity.
 Our empirical evaluation demonstrates that Sigil achieves practical
 performance: approximately 500 assets per second creation throughput,
 sub-50ms graph traversal at depth 100, and sub-second ZK selective disclosure
-via Midnight.  These benchmarks confirm that confidential provenance at scale
+via the confidential backend.  These benchmarks confirm that confidential provenance at scale
 is achievable with current cryptographic tooling.
 
 Sigil is released as open-source software under the Apache 2.0 license.  We
@@ -1064,7 +1135,7 @@ as public infrastructure for the verifiable digital economy.
 %% REFERENCES
 %% ============================================================================
 
-\begin{thebibliography}{30}
+\begin{thebibliography}{33}
 
 \bibitem{tramer2016}
 F.~Tram\`{e}r {\em et al.}, ``Stealing Machine Learning Models via Prediction
@@ -1087,6 +1158,16 @@ Design,'' in \textit{Proc. IEEE ICSA}, 2017, pp.~243--252.
 E.~Androulaki {\em et al.}, ``Hyperledger Fabric: A Distributed Operating
 System for Permissioned Blockchains,'' in \textit{Proc. EuroSys}, 2018,
 pp.~1--15.
+
+\bibitem{aztec2023}
+Aztec Network, ``Aztec: A Privacy-First Layer-2 Network on Ethereum,''
+\textit{Aztec Labs Technical Documentation}, 2023. [Online]. Available:
+\url{https://aztec.network}
+
+\bibitem{noir2023}
+Aztec Labs, ``Noir: A Domain-Specific Language for Zero-Knowledge Proofs,''
+\textit{Technical Documentation}, 2023. [Online]. Available:
+\url{https://noir-lang.org}
 
 \bibitem{midnight2023}
 Midnight Network, ``Midnight: A Data Protection Blockchain,''
@@ -1163,6 +1244,11 @@ at Scale,'' \textit{IEEE Access}, vol.~11, pp.~98765--98780, 2023.
 R.~Zhang {\em et al.}, ``Zero-Knowledge Proofs for Machine Learning: A
 Survey,'' \textit{IEEE Trans. Knowledge and Data Engineering}, vol.~36, no.~4,
 pp.~1567--1584, 2024.
+
+\bibitem{gabizon2019}
+A.~Gabizon, Z.~J.~Williamson, and O.~Ciobotaru, ``PLONK: Permutations over
+Lagrange-bases for Oecumenical Noninteractive Arguments of Knowledge,''
+\textit{Cryptology ePrint Archive}, Report 2019/953, 2019.
 
 \bibitem{liu2023}
 Y.~Liu {\em et al.}, ``Confidential Computing: A Survey of Hardware-Based
