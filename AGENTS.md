@@ -2,7 +2,7 @@
 
 ## Project: Sigil
 
-Sigil is a confidential provenance infrastructure written in TypeScript, designed as a backend-agnostic provenance layer with Midnight Network as the first confidential execution backend.
+Sigil is a confidential provenance infrastructure written in TypeScript, designed as a backend-agnostic provenance layer with a pluggable confidential execution layer. Aztec is the first confidential backend; Midnight is specified as a second but is on hold pending ecosystem maturity.
 
 ## Monorepo Structure
 
@@ -13,8 +13,10 @@ sigil/
 │   ├── crypto/            @sigil/crypto     Ed25519, SHA-256, DIDs, Merkle trees
 │   ├── graph/             @sigil/graph      SQLite-backed graph store
 │   ├── backend-local/     @sigil/backend-local   Local backend adapter
-│   ├── backend-midnight/  @sigil/backend-midnight  Midnight Network adapter
-│   ├── compact/           Midnight Compact contracts
+│   ├── backend-aztec/     @sigil/backend-aztec   Aztec confidential backend (planned)
+│   ├── noir/              Aztec.nr / Noir circuits (planned)
+│   ├── backend-midnight/  @sigil/backend-midnight  Midnight backend (on hold)
+│   ├── compact/           Midnight Compact contracts (on hold)
 │   ├── policy/            @sigil/policy     Policy engine and selective disclosure
 │   ├── sdk/               @sigil/sdk        High-level developer API
 │   └── cli/               @sigil/cli        Command-line interface
@@ -56,10 +58,13 @@ Build order must respect this dependency graph:
   ├── @sigil/graph
   └── @sigil/policy
         ├── @sigil/backend-local
-        └── @sigil/backend-midnight
+        └── @sigil/backend-aztec
               └── @sigil/sdk
                     └── @sigil/cli
 ```
+
+`@sigil/backend-aztec`, `packages/noir`, `@sigil/backend-midnight`, `packages/compact`, and
+`examples/` are documented targets — they do not exist on disk yet.
 
 ## Key Design Decisions
 

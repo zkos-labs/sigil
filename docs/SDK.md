@@ -15,7 +15,7 @@ pnpm add @sigil/sdk
 ```ts
 import { Sigil } from "@sigil/sdk";
 
-const sigil = new Sigil({ backend: "local" }); // "local" | "midnight" | "mock"
+const sigil = new Sigil({ backend: "local" }); // BackendName: "local" | "aztec" | "midnight" | "mock"
 
 // Sub-APIs
 sigil.asset   // create / get assets
@@ -30,7 +30,7 @@ sigil.disclose(...)  // selective disclosure
 sigil.revoke(...)    // revoke an attestation
 ```
 
-IDs are ULIDs. The current SDK uses an in-memory SQLite `LocalBackend`; durable storage and `midnight`/`mock` wiring are tracked (see [PRD §12.9](PRD.md#129-current-implementation-status)).
+IDs are ULIDs. The current SDK uses an in-memory SQLite `LocalBackend`; durable storage and `aztec`/`mock` wiring are tracked (see [PRD §12.9](PRD.md#129-current-implementation-status)). `midnight` is accepted but on hold.
 
 ## 3. Example — coffee provenance
 
@@ -68,7 +68,7 @@ const receipt = await sigil.disclose({
   level: VisibilityLevel.Auditor,
   fields: ["origin", "cert"],
 });
-// receipt: DisclosureReceipt — disclosedFields + proof (ZK at the Midnight anchor)
+// receipt: DisclosureReceipt — disclosedFields + proof (ZK in the confidential backend)
 ```
 
 ## 5. Export

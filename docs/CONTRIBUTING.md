@@ -1,6 +1,6 @@
 # Contributing to Sigil
 
-Thanks for your interest in Sigil — a confidential provenance layer anchored by Midnight Network. This guide covers how to build, test, and contribute. See [AGENTS.md](../AGENTS.md) for the full developer/agent conventions and the package build graph.
+Thanks for your interest in Sigil — a confidential provenance layer with a pluggable confidential execution layer (Aztec today). This guide covers how to build, test, and contribute. See [AGENTS.md](../AGENTS.md) for the full developer/agent conventions and the package build graph.
 
 ## Prerequisites
 
@@ -17,7 +17,7 @@ pnpm test
 
 ## Repository layout
 
-A pnpm monorepo (`packages/*`), build order: `core → crypto/graph/policy → backend-local/backend-midnight → sdk → cli`.
+A pnpm monorepo (`packages/*`), build order: `core → crypto/graph/policy → backend-local/backend-aztec → sdk → cli`.
 
 | Package | Purpose |
 |---|---|
@@ -26,7 +26,8 @@ A pnpm monorepo (`packages/*`), build order: `core → crypto/graph/policy → b
 | `@sigil/graph` | SQLite graph store, DOT/JSON-LD export |
 | `@sigil/policy` | policy engine & selective disclosure |
 | `@sigil/backend-local` | local development backend |
-| `@sigil/backend-midnight` | Midnight trust-anchor adapter *(planned)* |
+| `@sigil/backend-aztec` | Aztec confidential backend *(planned, v0.3)* |
+| `@sigil/backend-midnight` | Midnight confidential backend *(on hold, v0.6+)* |
 | `@sigil/sdk` | high-level developer API |
 | `@sigil/cli` | command-line interface |
 

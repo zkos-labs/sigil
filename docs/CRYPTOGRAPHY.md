@@ -41,16 +41,20 @@ Verification recomputes `h` and checks `σ` against the signer's public key; any
 
 Policy `commit` actions produce **Pedersen commitments**, letting a value be committed publicly and selectively opened later via proof without revealing it at disclosure time.
 
-## 6. Zero-knowledge integration (Midnight)
+## 6. Zero-knowledge integration (confidential backend)
 
-At the Midnight trust anchor, a selective-disclosure proof `Π_ZK` attests that:
+In the confidential backend, a selective-disclosure proof `Π_ZK` attests that:
 
 1. the claim is valid (signature verified in-circuit),
 2. the claim is included in the asset's claim Merkle tree (Merkle proof in-circuit),
 3. the disclosed fields satisfy the policy (policy circuit),
 4. undisclosed fields remain private witnesses.
 
-The verifier receives `Π_ZK`, the disclosed values, and the Merkle root — confirming authenticity while learning nothing about hidden fields. *(Planned — the Midnight backend and Compact circuits are not yet implemented; see [RFC 0003](RFC/0003-midnight-adapter.md) and [RFC 0004](RFC/0004-selective-disclosure.md).)*
+The verifier receives `Π_ZK`, the disclosed values, and the Merkle root — confirming authenticity while learning nothing about hidden fields.
+
+On **Aztec** (the active backend) these are Noir circuits, and the proof is generated **client-side in the PXE**. This matters for a provenance system: the private witnesses — the undisclosed fields — never leave the holder's machine, so there is no third-party prover to trust with them. On **Midnight** (on hold) the equivalent circuits are written in Compact.
+
+*(Planned — no confidential backend is implemented yet; see [RFC 0005](RFC/0005-aztec-adapter.md), [RFC 0003](RFC/0003-midnight-adapter.md), and [RFC 0004](RFC/0004-selective-disclosure.md).)*
 
 ## 7. Content addressing
 

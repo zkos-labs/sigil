@@ -52,10 +52,12 @@ Disclose(Asset, Viewer, Policy) → { field: value | null }
 
 The receipt records who received which fields when, forming part of the audit trail.
 
-## 6. Cryptographic enforcement (Midnight)
+## 6. Cryptographic enforcement (confidential backend)
 
-On the Midnight anchor, policies compile to Compact circuit constraints: `reveal` constrains the revealed value to match the committed value at a position; `hash` constrains correct hashing; `redact` contributes no constraint. Midnight emits one ZK proof that all rules were applied exactly — no more, no less. This upgrades disclosure from *promised* (default-deny logic) to *cryptographically enforced*.
+Policies compile to circuit constraints: `reveal` constrains the revealed value to match the committed value at a position; `hash` constrains correct hashing; `redact` contributes no constraint. The backend emits one ZK proof that all rules were applied exactly — no more, no less. This upgrades disclosure from *promised* (default-deny logic) to *cryptographically enforced*.
+
+On **Aztec** (active) the constraints are Noir circuits proved client-side in the PXE; on **Midnight** (on hold) they are Compact circuits. The mapping is the same either way — that equivalence is what keeps the backend swappable.
 
 ## 7. Status & non-interference
 
-Today the policy engine is implemented, unit-tested with default-deny semantics, and **wired into the SDK** — `Sigil.disclose` routes through `DefaultPolicyEngine`, so a viewer below an asset's required level receives no fields. Disclosure proofs are still `ProofType.None` (not yet cryptographically enforced) pending the Midnight anchor (see [PRD §12.9](PRD.md#129-current-implementation-status)). Non-interference (a lower-level viewer learns nothing about higher-level fields) is a target for formal verification.
+Today the policy engine is implemented, unit-tested with default-deny semantics, and **wired into the SDK** — `Sigil.disclose` routes through `DefaultPolicyEngine`, so a viewer below an asset's required level receives no fields. Disclosure proofs are still `ProofType.None` (not yet cryptographically enforced) pending the confidential backend (see [PRD §12.9](PRD.md#129-current-implementation-status)). Non-interference (a lower-level viewer learns nothing about higher-level fields) is a target for formal verification.
